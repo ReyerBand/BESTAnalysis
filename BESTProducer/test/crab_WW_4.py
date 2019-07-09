@@ -10,11 +10,11 @@ config.section_("JobType")
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'run_WW.py'
 config.JobType.inputFiles = ['TMVARegression_MLP.weights.xml']
-config.JobType.outputFiles = ['histo_WW.root']
+config.JobType.outputFiles = ['histo_BESTprod.root']
 config.JobType.allowUndistributedCMSSW = True
 
 config.section_("Data")
-config.Data.inputDataset = '/ZprimeToWW_narrow_M-4000_13TeV-madgraph/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'
+config.Data.inputDataset = '/ZprimeToWW_width0p1_M-4000_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM'
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.Data.ignoreLocality = True
@@ -23,3 +23,4 @@ config.Data.publication = False
 
 config.section_("Site")
 config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.whitelist = ['T2_US_*']

@@ -2,19 +2,19 @@ from WMCore.Configuration import Configuration
 config = Configuration()
 
 config.section_("General")
-config.General.requestName = 'RadionHH_2TeV_trees'
+config.General.requestName = 'RSGraviton_7TeV_trees'
 config.General.workArea = 'NNoutputs'
 config.General.transferLogs = True
 
 config.section_("JobType")
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = 'run_HH.py'
+config.JobType.psetName = 'run_BB.py'
 config.JobType.inputFiles = ['TMVARegression_MLP.weights.xml']
 config.JobType.outputFiles = ['histo_BESTprod.root']
 config.JobType.allowUndistributedCMSSW = True
 
 config.section_("Data")
-config.Data.inputDataset = '/VBFToRadionToHHTo4B_M-2000_narrow_13TeV-madgraph/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'
+config.Data.inputDataset = '/RSGravitonToBBbar_kMpl-01_M-7000_TuneCUEP8M1_13TeV-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM'
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.Data.ignoreLocality = True

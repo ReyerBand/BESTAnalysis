@@ -8,9 +8,9 @@ config.General.transferLogs = True
 
 config.section_("JobType")
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = 'run_TT.py'
+config.JobType.psetName = 'run_genericMC.py'
 config.JobType.inputFiles = ['TMVARegression_MLP.weights.xml']
-config.JobType.outputFiles = ['histo_TT.root']
+config.JobType.outputFiles = ['histo_BESTprod.root']
 config.JobType.allowUndistributedCMSSW = True
 
 config.section_("Data")
