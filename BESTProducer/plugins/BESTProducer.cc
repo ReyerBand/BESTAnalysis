@@ -387,43 +387,39 @@
     listOfVars.push_back("Asym_H");
     listOfVars.push_back("Asym_Z");
 
-    listOfVectorVars.push_back("PFHiggsPx");
-    listOfVectorVars.push_back("PFHiggsPy");
-    listOfVectorVars.push_back("PFHiggsPz");
-    listOfVectorVars.push_back("PFHiggsPE");
+    listOfVectorVars.push_back("HiggsFrame_PF_candidate_px");
+    listOfVectorVars.push_back("HiggsFrame_PF_candidate_py");
+    listOfVectorVars.push_back("HiggsFrame_PF_candidate_pz");
+    listOfVectorVars.push_back("HiggsFrame_PF_candidate_e");
 
-    listOfVectorVars.push_back("PFWPx");
-    listOfVectorVars.push_back("PFWPy");
-    listOfVectorVars.push_back("PFWPz");
-    listOfVectorVars.push_back("PFWPE");
+    listOfVectorVars.push_back("TopFrame_PF_candidate_px");
+    listOfVectorVars.push_back("TopFrame_PF_candidate_py");
+    listOfVectorVars.push_back("TopFrame_PF_candidate_pz");
+    listOfVectorVars.push_back("TopFrame_PF_candidate_e");
 
-    listOfVectorVars.push_back("PFZPx");
-    listOfVectorVars.push_back("PFZPy");
-    listOfVectorVars.push_back("PFZPz");
-    listOfVectorVars.push_back("PFZPE");
+    listOfVectorVars.push_back("WFrame_PF_candidate_px");
+    listOfVectorVars.push_back("WFrame_PF_candidate_py");
+    listOfVectorVars.push_back("WFrame_PF_candidate_pz");
+    listOfVectorVars.push_back("WFrame_PF_candidate_e");
 
-    listOfVectorVars.push_back("PFtopPx");
-    listOfVectorVars.push_back("PFtopPy");
-    listOfVectorVars.push_back("PFtopPz");
-    listOfVectorVars.push_back("PFtopPE");
+    listOfVectorVars.push_back("ZFrame_PF_candidate_px");
+    listOfVectorVars.push_back("ZFrame_PF_candidate_py");
+    listOfVectorVars.push_back("ZFrame_PF_candidate_pz");
+    listOfVectorVars.push_back("ZFrame_PF_candidate_e");
 
-    listOfVectorVars.push_back("PFbPx");
-    listOfVectorVars.push_back("PFbPy");
-    listOfVectorVars.push_back("PFbPz");
-    listOfVectorVars.push_back("PFbPE");
-
- for (unsigned i = 0; i < listOfVars.size(); i++){
-
-	 treeVars[ listOfVars[i] ] = -999.99;
-	 jetTree->Branch( (listOfVars[i]).c_str() , &(treeVars[ listOfVars[i] ]), (listOfVars[i]+"/F").c_str() );
+    listOfVectorVars.push_back("PuppiWeights");
+    for (unsigned i = 0; i < listOfVars.size(); i++){
+      
+      treeVars[ listOfVars[i] ] = -999.99;
+      jetTree->Branch( (listOfVars[i]).c_str() , &(treeVars[ listOfVars[i] ]), (listOfVars[i]+"/F").c_str() );
     }
- std::vector<float> placeholder;
- placeholder.push_back(-999.99);
- for (unsigned i = 0; i < listOfVectorVars.size(); i++){
+    std::vector<float> placeholder;
+    placeholder.push_back(-999.99);
+    for (unsigned i = 0; i < listOfVectorVars.size(); i++){
 
-   vectorVars[ listOfVectorVars[i] ] = placeholder;
-   jetTree->Branch( (listOfVectorVars[i]).c_str() , &(vectorVars[ listOfVectorVars[i] ]));
- }
+      vectorVars[ listOfVectorVars[i] ] = placeholder;
+      jetTree->Branch( (listOfVectorVars[i]).c_str() , &(vectorVars[ listOfVectorVars[i] ]));
+    }
 
     //For NN inputs
 
@@ -610,6 +606,7 @@
    std::unique_ptr< std::vector<int > > isWv(new std::vector<int>() );
    std::unique_ptr< std::vector<int > > isZv(new std::vector<int>() );
    std::unique_ptr< std::vector<int > > isHv(new std::vector<int>() );
+
 
 
    Handle< std::vector<pat::PackedCandidate> > pfCands;
@@ -955,6 +952,8 @@
 	std::vector<TLorentzVector> particles_Z;
 	std::vector<TLorentzVector> particles_H;
 
+	std::vector<float> PuppiWeights;
+
 	std::vector<math::XYZVector> particles2_jet;
 	std::vector<math::XYZVector> particles2_top;
 	std::vector<math::XYZVector> particles2_W;
@@ -1006,7 +1005,8 @@
 
 		daughtersOfJet.push_back( (pat::PackedCandidate *) ijet->daughter(i) );
 	}
-	
+	//	cout << "Gen class of this jet: isZ isW isH isB isT" << isZ << isW << isH << isB << isT << endl;
+   
 	for(unsigned int i = 0; i < daughtersOfJet.size(); i++){
 
 
@@ -1017,26 +1017,32 @@
 		float puppiWt = 1.0;
 		if (usePuppi_) puppiWt = daughtersOfJet[i]->puppiWeight();
 
-
-		if (puppiWt*daughtersOfJet[i]->pt() < 0.5) continue;
-
+		//		cout << "Puppi weight of daughter " << i << " = " << puppiWt << endl;
+		//		if (puppiWt*daughtersOfJet[i]->pt() < 0.5) continue;
+		TLorentzVector thisParticleLV_jet, thisParticleLV_top, thisParticleLV_W, thisParticleLV_Z, thisParticleLV_H;
+		thisParticleLV_jet.SetXYZT(daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy());
+		thisParticleLV_top = thisParticleLV_jet;
+		thisParticleLV_W = thisParticleLV_jet;
+		thisParticleLV_Z = thisParticleLV_jet;
+		thisParticleLV_H = thisParticleLV_jet;
+		/*
 		TLorentzVector thisParticleLV_jet( daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy() );		
 		TLorentzVector thisParticleLV_top( daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy() );		
 		TLorentzVector thisParticleLV_W( daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy() );		
 		TLorentzVector thisParticleLV_Z( daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy() );		
 		TLorentzVector thisParticleLV_H( daughtersOfJet[i]->px(), daughtersOfJet[i]->py(), daughtersOfJet[i]->pz(), daughtersOfJet[i]->energy() );		
-
+		*/
 		//                cout << "Higgs mass pre-PUPPI of this particle " << thisParticleLV_H.M() << endl;
 
 		//Testing putting the puppi weight AFTER boosting - currently, this makes PU particles always backwards going.  
 		/*
-		if (usePuppi_){
-			thisParticleLV_jet *= puppiWt;
-			thisParticleLV_top *= puppiWt;
-			thisParticleLV_W *= puppiWt;
-			thisParticleLV_Z *= puppiWt;
-			thisParticleLV_H *= puppiWt;
-		}
+		  if (usePuppi_){
+		  thisParticleLV_jet *= puppiWt;
+		  thisParticleLV_top *= puppiWt;
+		  thisParticleLV_W *= puppiWt;
+		  thisParticleLV_Z *= puppiWt;
+		  thisParticleLV_H *= puppiWt;
+		  }
 		*/
 		if (daughtersOfJet[i]->pt() > 1.0) qxptsum += daughtersOfJet[i]->charge() * pow( daughtersOfJet[i]->pt(), 0.6);//(ijetVect) ;
 		
@@ -1044,7 +1050,7 @@
 		h_preBoostJet->Fill(thisParticleLV_jet.Eta(), thisParticleLV_jet.Phi(), thisParticleLV_jet.E());
 
 
-
+		//		if (daughtersOfJet[i]->mass() < -0.1) cout << daughtersOfJet[i]->mass();
 
 
 		
@@ -1068,7 +1074,6 @@
 
 		//		cout << "Higgs mass of boosted particle " << thisParticleLV_H.M() << endl;
 
-
 		pboost( thisJetLV_W.Vect(), thisParticleLV_W.Vect(), thisParticleLV_W, false);
 		pboost( thisJetLV_Z.Vect(), thisParticleLV_Z.Vect(), thisParticleLV_Z, false);
 		pboost( thisJetLV_top.Vect(), thisParticleLV_top.Vect(), thisParticleLV_top, false);
@@ -1085,43 +1090,74 @@
                 thisParticleLV_H.RotateX(-thisJetLV_H.Vect().Theta());
                 cout << "Higgs mass of rotated particle " << thisParticleLV_H.M() << endl;
 		*/
+
 		//Reduce 4-V in boost frame by puppi weight determined in lab (not sure this is sensible)
                 if (usePuppi_){
-		  thisParticleLV_jet *= puppiWt;
-		  thisParticleLV_top *= puppiWt;
-		  thisParticleLV_W *= puppiWt;
-		  thisParticleLV_Z *= puppiWt;
-		  thisParticleLV_H *= puppiWt;
-                }
+		  //		  if (puppiWt > 0.1){
+		    /*
+		    thisParticleLV_jet *= puppiWt;
+		    thisParticleLV_top *= puppiWt;
+		    thisParticleLV_W *= puppiWt;
+		    thisParticleLV_Z *= puppiWt;
+		    thisParticleLV_H *= puppiWt;
+		    */
+		    PuppiWeights.push_back(puppiWt);
+
+		    particles_jet.push_back( thisParticleLV_jet );
+		    particles_top.push_back( thisParticleLV_top );
+		    particles_W.push_back( thisParticleLV_W );
+		    particles_Z.push_back( thisParticleLV_Z );
+		    particles_H.push_back( thisParticleLV_H );
+
+		    topFJparticles.push_back( PseudoJet( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T() ) );
+		    WFJparticles.push_back( PseudoJet( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T() ) );
+		    ZFJparticles.push_back( PseudoJet( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T() ) );
+		    HFJparticles.push_back( PseudoJet( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T() ) );
+		    jetFJparticles.push_back( PseudoJet( thisParticleLV_jet.X(), thisParticleLV_jet.Y(), thisParticleLV_jet.Z(), thisParticleLV_jet.T() ) );
+
+
+		    particles2_top.push_back( math::XYZVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z() ));
+		    particles3_top.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T()     ) ));
+		    particles2_W.push_back( math::XYZVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z() ));
+		    particles3_W.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T()     ) ));
+		    particles2_Z.push_back( math::XYZVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z() ));
+		    particles3_Z.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T()     ) ));
+		    particles2_H.push_back( math::XYZVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z() ));
+		    particles3_H.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T()     ) ));
+
+
+		    h_postBoostJet->Fill(thisParticleLV_jet.Eta(), thisParticleLV_jet.Phi(), thisParticleLV_jet.E() );
+
+		    //		  }
+		}
+		else{
+		  particles_jet.push_back( thisParticleLV_jet );
+		  particles_top.push_back( thisParticleLV_top );
+		  particles_W.push_back( thisParticleLV_W );
+		  particles_Z.push_back( thisParticleLV_Z );
+		  particles_H.push_back( thisParticleLV_H );
+		
+
+		  topFJparticles.push_back( PseudoJet( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T() ) );
+		  WFJparticles.push_back( PseudoJet( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T() ) );
+		  ZFJparticles.push_back( PseudoJet( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T() ) );
+		  HFJparticles.push_back( PseudoJet( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T() ) );
+		  jetFJparticles.push_back( PseudoJet( thisParticleLV_jet.X(), thisParticleLV_jet.Y(), thisParticleLV_jet.Z(), thisParticleLV_jet.T() ) );
+
+
+
+		  particles2_top.push_back( math::XYZVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z() ));
+		  particles3_top.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T()     ) ));
+		  particles2_W.push_back( math::XYZVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z() ));
+		  particles3_W.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T()     ) ));
+		  particles2_Z.push_back( math::XYZVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z() ));
+		  particles3_Z.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T()     ) ));
+		  particles2_H.push_back( math::XYZVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z() ));
+		  particles3_H.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T()     ) ));
 
 		
-		particles_jet.push_back( thisParticleLV_jet );
-		particles_top.push_back( thisParticleLV_top );
-		particles_W.push_back( thisParticleLV_W );
-		particles_Z.push_back( thisParticleLV_Z );
-		particles_H.push_back( thisParticleLV_H );
-
-
-		topFJparticles.push_back( PseudoJet( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T() ) );
-		WFJparticles.push_back( PseudoJet( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T() ) );
-		ZFJparticles.push_back( PseudoJet( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T() ) );
-		HFJparticles.push_back( PseudoJet( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T() ) );
-		jetFJparticles.push_back( PseudoJet( thisParticleLV_jet.X(), thisParticleLV_jet.Y(), thisParticleLV_jet.Z(), thisParticleLV_jet.T() ) );
-
-
-
-		particles2_top.push_back( math::XYZVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z() ));
-		particles3_top.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_top.X(), thisParticleLV_top.Y(), thisParticleLV_top.Z(), thisParticleLV_top.T()     ) ));
-		particles2_W.push_back( math::XYZVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z() ));
-		particles3_W.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_W.X(), thisParticleLV_W.Y(), thisParticleLV_W.Z(), thisParticleLV_W.T()     ) ));
-		particles2_Z.push_back( math::XYZVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z() ));
-		particles3_Z.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_Z.X(), thisParticleLV_Z.Y(), thisParticleLV_Z.Z(), thisParticleLV_Z.T()     ) ));
-		particles2_H.push_back( math::XYZVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z() ));
-		particles3_H.push_back( reco::LeafCandidate(+1, reco::Candidate::LorentzVector( thisParticleLV_H.X(), thisParticleLV_H.Y(), thisParticleLV_H.Z(), thisParticleLV_H.T()     ) ));
-
-		
-		h_postBoostJet->Fill(thisParticleLV_jet.Eta(), thisParticleLV_jet.Phi(), thisParticleLV_jet.E() );
-		
+		  h_postBoostJet->Fill(thisParticleLV_jet.Eta(), thisParticleLV_jet.Phi(), thisParticleLV_jet.E() );
+		}		
 
 
 	}
@@ -1185,14 +1221,14 @@
 	vector<PseudoJet> jetsFJ_transformed = cs_transformed.inclusive_jets(0.0);
 
 	/*
-        vector<PseudoJet> jetsFJ = sorted_by_pt(cs.inclusive_jets(20.0));
-        vector<PseudoJet> jetsFJ_W = sorted_by_pt(cs_W.inclusive_jets(20.0));
-        vector<PseudoJet> jetsFJ_Z = sorted_by_pt(cs_Z.inclusive_jets(20.0));
-        vector<PseudoJet> jetsFJ_H = sorted_by_pt(cs_H.inclusive_jets(20.0));
-        vector<PseudoJet> jetsFJ_jet = sorted_by_pt(cs_jet.inclusive_jets(20.0));
-        vector<PseudoJet> jetsFJ_noBoost = sorted_by_pt(cs_noBoost.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ = sorted_by_pt(cs.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ_W = sorted_by_pt(cs_W.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ_Z = sorted_by_pt(cs_Z.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ_H = sorted_by_pt(cs_H.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ_jet = sorted_by_pt(cs_jet.inclusive_jets(20.0));
+	  vector<PseudoJet> jetsFJ_noBoost = sorted_by_pt(cs_noBoost.inclusive_jets(20.0));
 
-        vector<PseudoJet> jetsFJ_transformed = cs_transformed.inclusive_jets(20.0);
+	  vector<PseudoJet> jetsFJ_transformed = cs_transformed.inclusive_jets(20.0);
 	*/
 
 	//sum of jet pz and p  Indices = top, W, Z, H, j
@@ -1231,134 +1267,134 @@
 	  thisJetLV = TLorentzVector(jetsFJ[i].px(), jetsFJ[i].py(), jetsFJ[i].pz(), jetsFJ[i].e());
 	  m1234LV_top += thisJetLV;
 	  switch (i){
-	      case 0:
-				treeVars["et1_top"] = jetsFJ[i].pt();
-				m12LV_top += thisJetLV;
-				m13LV_top += thisJetLV;
-				break;
-			case 1:
-				treeVars["et2_top"] = jetsFJ[i].pt();
-				m12LV_top += thisJetLV;
-				m23LV_top += thisJetLV;
-				break;
-			case 2:
-				treeVars["et3_top"] = jetsFJ[i].pt();
-				m13LV_top += thisJetLV;
-				m23LV_top += thisJetLV;
-				break;
-			case 3:
-				treeVars["et4_top"] = jetsFJ[i].pt();
-				break;
-		}
+	  case 0:
+	    treeVars["et1_top"] = jetsFJ[i].pt();
+	    m12LV_top += thisJetLV;
+	    m13LV_top += thisJetLV;
+	    break;
+	  case 1:
+	    treeVars["et2_top"] = jetsFJ[i].pt();
+	    m12LV_top += thisJetLV;
+	    m23LV_top += thisJetLV;
+	    break;
+	  case 2:
+	    treeVars["et3_top"] = jetsFJ[i].pt();
+	    m13LV_top += thisJetLV;
+	    m23LV_top += thisJetLV;
+	    break;
+	  case 3:
+	    treeVars["et4_top"] = jetsFJ[i].pt();
+	    break;
+	  }
 	
 	}
 	for (size_t i=0; i < TMath::Min(maxJets, jetsFJ_W.size()); i++){
-		sumPz[1] += jetsFJ_W[i].pz();
-		sumP[1] += sqrt( jetsFJ_W[i].modp2() );
-		thisJetLV = TLorentzVector(jetsFJ_W[i].px(), jetsFJ_W[i].py(), jetsFJ_W[i].pz(), jetsFJ_W[i].e());
-		m1234LV_W += thisJetLV;
-		switch (i){
-			case 0:
-				treeVars["et1_W"] = jetsFJ_W[i].pt();
-				m12LV_W += thisJetLV;
-				m13LV_W += thisJetLV;
-				break;
-			case 1:
-				treeVars["et2_W"] = jetsFJ_W[i].pt();
-				m12LV_W += thisJetLV;
-				m23LV_W += thisJetLV;
-				break;
-			case 2:
-				treeVars["et3_W"] = jetsFJ_W[i].pt();
-				m13LV_W += thisJetLV;
-				m23LV_W += thisJetLV;
-				break;
-			case 3:
-				treeVars["et4_W"] = jetsFJ_W[i].pt();
-				break;
-		}
+	  sumPz[1] += jetsFJ_W[i].pz();
+	  sumP[1] += sqrt( jetsFJ_W[i].modp2() );
+	  thisJetLV = TLorentzVector(jetsFJ_W[i].px(), jetsFJ_W[i].py(), jetsFJ_W[i].pz(), jetsFJ_W[i].e());
+	  m1234LV_W += thisJetLV;
+	  switch (i){
+	  case 0:
+	    treeVars["et1_W"] = jetsFJ_W[i].pt();
+	    m12LV_W += thisJetLV;
+	    m13LV_W += thisJetLV;
+	    break;
+	  case 1:
+	    treeVars["et2_W"] = jetsFJ_W[i].pt();
+	    m12LV_W += thisJetLV;
+	    m23LV_W += thisJetLV;
+	    break;
+	  case 2:
+	    treeVars["et3_W"] = jetsFJ_W[i].pt();
+	    m13LV_W += thisJetLV;
+	    m23LV_W += thisJetLV;
+	    break;
+	  case 3:
+	    treeVars["et4_W"] = jetsFJ_W[i].pt();
+	    break;
+	  }
 	}
 	for (size_t i=0; i < TMath::Min(maxJets, jetsFJ_Z.size()); i++){
-		sumPz[2] += jetsFJ_Z[i].pz();
-		sumP[2] += sqrt( jetsFJ_Z[i].modp2() );
-		thisJetLV = TLorentzVector(jetsFJ_Z[i].px(), jetsFJ_Z[i].py(), jetsFJ_Z[i].pz(), jetsFJ_Z[i].e());
-		m1234LV_Z += thisJetLV;
-		switch (i){
-			case 0:
-				treeVars["et1_Z"] = jetsFJ_Z[i].pt();
-				m12LV_Z += thisJetLV;
-				m13LV_Z += thisJetLV;
-				break;
-			case 1:
-				treeVars["et2_Z"] = jetsFJ_Z[i].pt();
-				m12LV_Z += thisJetLV;
-				m23LV_Z += thisJetLV;
-				break;
-			case 2:
-				treeVars["et3_Z"] = jetsFJ_Z[i].pt();
-				m13LV_Z += thisJetLV;
-				m23LV_Z += thisJetLV;
-				break;
-			case 3:
-				treeVars["et4_Z"] = jetsFJ_Z[i].pt();
-				break;
-		}
+	  sumPz[2] += jetsFJ_Z[i].pz();
+	  sumP[2] += sqrt( jetsFJ_Z[i].modp2() );
+	  thisJetLV = TLorentzVector(jetsFJ_Z[i].px(), jetsFJ_Z[i].py(), jetsFJ_Z[i].pz(), jetsFJ_Z[i].e());
+	  m1234LV_Z += thisJetLV;
+	  switch (i){
+	  case 0:
+	    treeVars["et1_Z"] = jetsFJ_Z[i].pt();
+	    m12LV_Z += thisJetLV;
+	    m13LV_Z += thisJetLV;
+	    break;
+	  case 1:
+	    treeVars["et2_Z"] = jetsFJ_Z[i].pt();
+	    m12LV_Z += thisJetLV;
+	    m23LV_Z += thisJetLV;
+	    break;
+	  case 2:
+	    treeVars["et3_Z"] = jetsFJ_Z[i].pt();
+	    m13LV_Z += thisJetLV;
+	    m23LV_Z += thisJetLV;
+	    break;
+	  case 3:
+	    treeVars["et4_Z"] = jetsFJ_Z[i].pt();
+	    break;
+	  }
 	}
 	for (size_t i=0; i < TMath::Min(maxJets, jetsFJ_H.size()); i++){
-		sumPz[3] += jetsFJ_H[i].pz();
-		sumP[3] += sqrt( jetsFJ_H[i].modp2() );
-		thisJetLV = TLorentzVector(jetsFJ_H[i].px(), jetsFJ_H[i].py(), jetsFJ_H[i].pz(), jetsFJ_H[i].e());
-		m1234LV_H += thisJetLV;
-		switch (i){
-			case 0:
-				treeVars["et1_H"] = jetsFJ_H[i].pt();
-				m12LV_H += thisJetLV;
-				m13LV_H += thisJetLV;
-				break;
-			case 1:
-				treeVars["et2_H"] = jetsFJ_H[i].pt();
-				m12LV_H += thisJetLV;
-				m23LV_H += thisJetLV;
-				break;
-			case 2:
-				treeVars["et3_H"] = jetsFJ_H[i].pt();
-				m13LV_H += thisJetLV;
-				m23LV_H += thisJetLV;
-				break;
-			case 3:
-				treeVars["et4_H"] = jetsFJ_H[i].pt();
-				break;
-		}
+	  sumPz[3] += jetsFJ_H[i].pz();
+	  sumP[3] += sqrt( jetsFJ_H[i].modp2() );
+	  thisJetLV = TLorentzVector(jetsFJ_H[i].px(), jetsFJ_H[i].py(), jetsFJ_H[i].pz(), jetsFJ_H[i].e());
+	  m1234LV_H += thisJetLV;
+	  switch (i){
+	  case 0:
+	    treeVars["et1_H"] = jetsFJ_H[i].pt();
+	    m12LV_H += thisJetLV;
+	    m13LV_H += thisJetLV;
+	    break;
+	  case 1:
+	    treeVars["et2_H"] = jetsFJ_H[i].pt();
+	    m12LV_H += thisJetLV;
+	    m23LV_H += thisJetLV;
+	    break;
+	  case 2:
+	    treeVars["et3_H"] = jetsFJ_H[i].pt();
+	    m13LV_H += thisJetLV;
+	    m23LV_H += thisJetLV;
+	    break;
+	  case 3:
+	    treeVars["et4_H"] = jetsFJ_H[i].pt();
+	    break;
+	  }
 	}
 	for (size_t i=0; i < TMath::Min(maxJets, jetsFJ_jet.size()); i++){
-		sumPz[4] += jetsFJ_jet[i].pz();
-		sumP[4] += sqrt( jetsFJ_jet[i].modp2() );
-		thisJetLV = TLorentzVector(jetsFJ_jet[i].px(), jetsFJ_jet[i].py(), jetsFJ_jet[i].pz(), jetsFJ_jet[i].e());
-		m1234LV_jet += thisJetLV;
-		switch (i){
-			case 0:
-				treeVars["et1_jet"] = jetsFJ_jet[i].pt();
-				m12LV_jet += thisJetLV;
-				m13LV_jet += thisJetLV;
-				break;
-			case 1:
-				treeVars["et2_jet"] = jetsFJ_jet[i].pt();
-				m12LV_jet += thisJetLV;
-				m23LV_jet += thisJetLV;
-				break;
-			case 2:
-				treeVars["et3_jet"] = jetsFJ_jet[i].pt();
-				m13LV_jet += thisJetLV;
-				m23LV_jet += thisJetLV;
-				break;
-			case 3:
-				treeVars["et4_jet"] = jetsFJ_jet[i].pt();
-				break;
-		}
+	  sumPz[4] += jetsFJ_jet[i].pz();
+	  sumP[4] += sqrt( jetsFJ_jet[i].modp2() );
+	  thisJetLV = TLorentzVector(jetsFJ_jet[i].px(), jetsFJ_jet[i].py(), jetsFJ_jet[i].pz(), jetsFJ_jet[i].e());
+	  m1234LV_jet += thisJetLV;
+	  switch (i){
+	  case 0:
+	    treeVars["et1_jet"] = jetsFJ_jet[i].pt();
+	    m12LV_jet += thisJetLV;
+	    m13LV_jet += thisJetLV;
+	    break;
+	  case 1:
+	    treeVars["et2_jet"] = jetsFJ_jet[i].pt();
+	    m12LV_jet += thisJetLV;
+	    m23LV_jet += thisJetLV;
+	    break;
+	  case 2:
+	    treeVars["et3_jet"] = jetsFJ_jet[i].pt();
+	    m13LV_jet += thisJetLV;
+	    m23LV_jet += thisJetLV;
+	    break;
+	  case 3:
+	    treeVars["et4_jet"] = jetsFJ_jet[i].pt();
+	    break;
+	  }
 	}
 
 
-
+      
 	treeVars["m1234_jet"] = m1234LV_jet.M();
 	treeVars["m12_jet"] = m12LV_jet.M();
 	treeVars["m23_jet"] = m23LV_jet.M();
@@ -1380,7 +1416,7 @@
 	treeVars["m23_H"] = m23LV_H.M();
 	treeVars["m13_H"] = m13LV_H.M();
 
-
+   
 	treeVars["q"] = jetq;
 	treeVars["sumPz_top"] = sumPz[0];
 	treeVars["sumPz_W"] = sumPz[1];
@@ -1399,7 +1435,7 @@
         treeVars["Asym_H"] = (sumPz[3]/sumP[3]);
         treeVars["Asym_jet"] = (sumPz[4]/sumP[4]);
 
-
+   
 
 	treeVars["Njets_top"] = jetsFJ.size();
 	treeVars["Njets_W"] = jetsFJ_W.size();
@@ -1446,195 +1482,255 @@
 	treeVars["sphericity_H"] = eventShapes_H.sphericity(2);
 	treeVars["aplanarity_H"] = eventShapes_H.aplanarity(2);
 	treeVars["thrust_H"] = thrustCalculator_H.thrust();
+      
+	sumPztop->push_back( treeVars["sumPz_top"]);
+	sumPzW->push_back( treeVars["sumPz_W"]);
+	sumPzZ->push_back( treeVars["sumPz_Z"]);
+	sumPzH->push_back( treeVars["sumPz_H"]);
+	sumPzjet->push_back( treeVars["sumPz_jet"]);
+	sumPtop->push_back( treeVars["sumP_top"]);
+	sumPW->push_back( treeVars["sumP_W"]);
+	sumPZ->push_back( treeVars["sumP_Z"]);
+	sumPH->push_back( treeVars["sumP_H"]);
+	sumPjet->push_back( treeVars["sumP_jet"]);
+	Njetstop->push_back( treeVars["Njets_top"]);
+	NjetsW->push_back( treeVars["Njets_W"]);
+	NjetsZ->push_back( treeVars["Njets_Z"]);
+	NjetsH->push_back( treeVars["Njets_H"]);
+	Njetsjet->push_back( treeVars["Njets_jet"]);
+	fw_moments_1_top->push_back( treeVars["h1_top"]);
+	fw_moments_2_top->push_back( treeVars["h2_top"]);
+	fw_moments_3_top->push_back( treeVars["h3_top"]);
+	fw_moments_4_top->push_back( treeVars["h4_top"]);
+	isotropy_top->push_back( treeVars["isotropy_top"]);
+   	sphericity_top->push_back( treeVars["sphericity_top"]);
+	aplanarity_top->push_back( treeVars["aplanarity_top"]);
+	thrust_top->push_back( treeVars["thrust_top"]);
+	fw_moments_1_W->push_back( treeVars["h1_W"]);
+	fw_moments_2_W->push_back( treeVars["h2_W"]);
+	fw_moments_3_W->push_back( treeVars["h3_W"]);
+	fw_moments_4_W->push_back( treeVars["h4_W"]);
+	isotropy_W->push_back( treeVars["isotropy_W"]);
+	sphericity_W->push_back( treeVars["sphericity_W"]);
+	aplanarity_W->push_back( treeVars["aplanarity_W"]);
+	thrust_W->push_back( treeVars["thrust_W"]);
+	fw_moments_1_Z->push_back( treeVars["h1_Z"]);
+   	fw_moments_2_Z->push_back( treeVars["h2_Z"]);
+	fw_moments_3_Z->push_back( treeVars["h3_Z"]);
+	fw_moments_4_Z->push_back( treeVars["h4_Z"]);
+	isotropy_Z->push_back( treeVars["isotropy_Z"]);
+	sphericity_Z->push_back( treeVars["sphericity_Z"]);
+	aplanarity_Z->push_back( treeVars["aplanarity_Z"]);
+	thrust_Z->push_back( treeVars["thrust_Z"]);
+	fw_moments_1_H->push_back( treeVars["h1_H"]);
+	fw_moments_2_H->push_back( treeVars["h2_H"]);
+	fw_moments_3_H->push_back( treeVars["h3_H"]);
+	fw_moments_4_H->push_back( treeVars["h4_H"]);
+	isotropy_H->push_back( treeVars["isotropy_H"]);
+   	sphericity_H->push_back( treeVars["sphericity_H"]); 
+   	aplanarity_H->push_back( treeVars["aplanarity_H"]); 
+   	thrust_H->push_back( treeVars["thrust_H"]);
+	et->push_back( treeVars["et"]);
+   	eta->push_back( treeVars["eta"]);
+	mass->push_back( treeVars["mass"]);
+	SDmass->push_back( treeVars["SDmass"]);
+	tau32V->push_back( treeVars["tau32"]);
+	tau21V->push_back( treeVars["tau21"]);
+	bDiscV->push_back( treeVars["bDisc"]);
+	bDisc1V->push_back( treeVars["bDisc1"]);
+   	bDisc2V->push_back( treeVars["bDisc2"]);
+	m12_H->push_back( treeVars["m12_H"]);
+	m23_H->push_back( treeVars["m23_H"]);
+	m13_H->push_back( treeVars["m13_H"]);
+	m1234_H->push_back( treeVars["m1234_H"]);
+	m12_W->push_back( treeVars["m12_W"]);
+	m23_W->push_back( treeVars["m23_W"]);
+	m13_W->push_back( treeVars["m13_W"]);
+	m1234_W->push_back( treeVars["m1234_W"]);
+   	m12_Z->push_back( treeVars["m12_Z"]);
+	m23_Z->push_back( treeVars["m23_Z"]);
+	m13_Z->push_back( treeVars["m13_Z"]);
+	m1234_Z->push_back( treeVars["m1234_Z"]);
+	m12_top->push_back( treeVars["m12_top"]);
+	m23_top->push_back( treeVars["m23_top"]);
+	m13_top->push_back( treeVars["m13_top"]);
+	m1234_top->push_back( treeVars["m1234_top"]);
+   
+	savedJetsV->push_back( *ijet );
 
-   sumPztop->push_back( treeVars["sumPz_top"]);
-   sumPzW->push_back( treeVars["sumPz_W"]);
-   sumPzZ->push_back( treeVars["sumPz_Z"]);
-   sumPzH->push_back( treeVars["sumPz_H"]);
-   sumPzjet->push_back( treeVars["sumPz_jet"]);
-   sumPtop->push_back( treeVars["sumP_top"]);
-   sumPW->push_back( treeVars["sumP_W"]);
-   sumPZ->push_back( treeVars["sumP_Z"]);
-   sumPH->push_back( treeVars["sumP_H"]);
-   sumPjet->push_back( treeVars["sumP_jet"]);
-   Njetstop->push_back( treeVars["Njets_top"]);
-   NjetsW->push_back( treeVars["Njets_W"]);
-   NjetsZ->push_back( treeVars["Njets_Z"]);
-   NjetsH->push_back( treeVars["Njets_H"]);
-   Njetsjet->push_back( treeVars["Njets_jet"]);
-   fw_moments_1_top->push_back( treeVars["h1_top"]);
-   fw_moments_2_top->push_back( treeVars["h2_top"]);
-   fw_moments_3_top->push_back( treeVars["h3_top"]);
-   fw_moments_4_top->push_back( treeVars["h4_top"]);
-   isotropy_top->push_back( treeVars["isotropy_top"]);
-   sphericity_top->push_back( treeVars["sphericity_top"]);
-   aplanarity_top->push_back( treeVars["aplanarity_top"]);
-   thrust_top->push_back( treeVars["thrust_top"]);
-   fw_moments_1_W->push_back( treeVars["h1_W"]);
-   fw_moments_2_W->push_back( treeVars["h2_W"]);
-   fw_moments_3_W->push_back( treeVars["h3_W"]);
-   fw_moments_4_W->push_back( treeVars["h4_W"]);
-   isotropy_W->push_back( treeVars["isotropy_W"]);
-   sphericity_W->push_back( treeVars["sphericity_W"]);
-   aplanarity_W->push_back( treeVars["aplanarity_W"]);
-   thrust_W->push_back( treeVars["thrust_W"]);
-   fw_moments_1_Z->push_back( treeVars["h1_Z"]);
-   fw_moments_2_Z->push_back( treeVars["h2_Z"]);
-   fw_moments_3_Z->push_back( treeVars["h3_Z"]);
-   fw_moments_4_Z->push_back( treeVars["h4_Z"]);
-   isotropy_Z->push_back( treeVars["isotropy_Z"]);
-   sphericity_Z->push_back( treeVars["sphericity_Z"]);
-   aplanarity_Z->push_back( treeVars["aplanarity_Z"]);
-   thrust_Z->push_back( treeVars["thrust_Z"]);
-   fw_moments_1_H->push_back( treeVars["h1_H"]);
-   fw_moments_2_H->push_back( treeVars["h2_H"]);
-   fw_moments_3_H->push_back( treeVars["h3_H"]);
-   fw_moments_4_H->push_back( treeVars["h4_H"]);
-   isotropy_H->push_back( treeVars["isotropy_H"]);
-   sphericity_H->push_back( treeVars["sphericity_H"]);
-   aplanarity_H->push_back( treeVars["aplanarity_H"]);
-   thrust_H->push_back( treeVars["thrust_H"]);
-   et->push_back( treeVars["et"]);
-   eta->push_back( treeVars["eta"]);
-   mass->push_back( treeVars["mass"]);
-   SDmass->push_back( treeVars["SDmass"]);
-   tau32V->push_back( treeVars["tau32"]);
-   tau21V->push_back( treeVars["tau21"]);
-   bDiscV->push_back( treeVars["bDisc"]);
-   bDisc1V->push_back( treeVars["bDisc1"]);
-   bDisc2V->push_back( treeVars["bDisc2"]);
-   m12_H->push_back( treeVars["m12_H"]);
-   m23_H->push_back( treeVars["m23_H"]);
-   m13_H->push_back( treeVars["m13_H"]);
-   m1234_H->push_back( treeVars["m1234_H"]);
-   m12_W->push_back( treeVars["m12_W"]);
-   m23_W->push_back( treeVars["m23_W"]);
-   m13_W->push_back( treeVars["m13_W"]);
-   m1234_W->push_back( treeVars["m1234_W"]);
-   m12_Z->push_back( treeVars["m12_Z"]);
-   m23_Z->push_back( treeVars["m23_Z"]);
-   m13_Z->push_back( treeVars["m13_Z"]);
-   m1234_Z->push_back( treeVars["m1234_Z"]);
-   m12_top->push_back( treeVars["m12_top"]);
-   m23_top->push_back( treeVars["m23_top"]);
-   m13_top->push_back( treeVars["m13_top"]);
-   m1234_top->push_back( treeVars["m1234_top"]);
+	//Taking the particles_X collections and saving the px,py,pz,E of them separately.
+	//This makes fat files
+	std::vector<float> HiggsFrame_PF_candidate_px;
+	std::vector<float> HiggsFrame_PF_candidate_py;
+	std::vector<float> HiggsFrame_PF_candidate_pz;
+	std::vector<float> HiggsFrame_PF_candidate_e;
 
-   savedJetsV->push_back( *ijet );
+	std::vector<float> TopFrame_PF_candidate_px;
+	std::vector<float> TopFrame_PF_candidate_py;
+	std::vector<float> TopFrame_PF_candidate_pz;
+	std::vector<float> TopFrame_PF_candidate_e;
 
+	std::vector<float> WFrame_PF_candidate_px;
+	std::vector<float> WFrame_PF_candidate_py;
+	std::vector<float> WFrame_PF_candidate_pz;
+	std::vector<float> WFrame_PF_candidate_e;
 
+	std::vector<float> ZFrame_PF_candidate_px;
+	std::vector<float> ZFrame_PF_candidate_py;
+	std::vector<float> ZFrame_PF_candidate_pz;
+	std::vector<float> ZFrame_PF_candidate_e;
 
+	for (unsigned int ndaught = 0; ndaught < particles_top.size(); ndaught++){
+	  TopFrame_PF_candidate_px.push_back(particles_top[ndaught].Px());
+          TopFrame_PF_candidate_py.push_back(particles_top[ndaught].Py());
+          TopFrame_PF_candidate_pz.push_back(particles_top[ndaught].Pz());
+          TopFrame_PF_candidate_e.push_back(particles_top[ndaught].E());
+	}
+        for (unsigned int ndaught = 0; ndaught < particles_H.size(); ndaught++){
+          HiggsFrame_PF_candidate_px.push_back(particles_H[ndaught].Px());
+          HiggsFrame_PF_candidate_py.push_back(particles_H[ndaught].Py());
+          HiggsFrame_PF_candidate_pz.push_back(particles_H[ndaught].Pz());
+          HiggsFrame_PF_candidate_e.push_back(particles_H[ndaught].E());
+        }
+        for (unsigned int ndaught = 0; ndaught < particles_W.size(); ndaught++){
+          WFrame_PF_candidate_px.push_back(particles_W[ndaught].Px());
+          WFrame_PF_candidate_py.push_back(particles_W[ndaught].Py());
+          WFrame_PF_candidate_pz.push_back(particles_W[ndaught].Pz());
+          WFrame_PF_candidate_e.push_back(particles_W[ndaught].E());
+        }
+        for (unsigned int ndaught = 0; ndaught < particles_Z.size(); ndaught++){
+          ZFrame_PF_candidate_px.push_back(particles_Z[ndaught].Px());
+          ZFrame_PF_candidate_py.push_back(particles_Z[ndaught].Py());
+          ZFrame_PF_candidate_pz.push_back(particles_Z[ndaught].Pz());
+          ZFrame_PF_candidate_e.push_back(particles_Z[ndaught].E());
+        }
 
+	vectorVars["HiggsFrame_PF_candidate_px"] = HiggsFrame_PF_candidate_px;
+        vectorVars["HiggsFrame_PF_candidate_py"] = HiggsFrame_PF_candidate_py;
+        vectorVars["HiggsFrame_PF_candidate_pz"] = HiggsFrame_PF_candidate_pz;
+        vectorVars["HiggsFrame_PF_candidate_e"] = HiggsFrame_PF_candidate_e;
 
+        vectorVars["TopFrame_PF_candidate_px"] = TopFrame_PF_candidate_px;
+        vectorVars["TopFrame_PF_candidate_py"] = TopFrame_PF_candidate_py;
+        vectorVars["TopFrame_PF_candidate_pz"] = TopFrame_PF_candidate_pz;
+        vectorVars["TopFrame_PF_candidate_e"] = TopFrame_PF_candidate_e;
 
+        vectorVars["WFrame_PF_candidate_px"] = WFrame_PF_candidate_px;
+        vectorVars["WFrame_PF_candidate_py"] = WFrame_PF_candidate_py;
+        vectorVars["WFrame_PF_candidate_pz"] = WFrame_PF_candidate_pz;
+        vectorVars["WFrame_PF_candidate_e"] = WFrame_PF_candidate_e;
 
+        vectorVars["ZFrame_PF_candidate_px"] = ZFrame_PF_candidate_px;
+        vectorVars["ZFrame_PF_candidate_py"] = ZFrame_PF_candidate_py;
+        vectorVars["ZFrame_PF_candidate_pz"] = ZFrame_PF_candidate_pz;
+        vectorVars["ZFrame_PF_candidate_e"] = ZFrame_PF_candidate_e;
 
-
+	vectorVars["PuppiWeights"] = PuppiWeights;
 	jetTree->Fill();
-
+	
 	
 
-
-    }//End jet loop
-
-
-
-    if (passFilters) {
-
-   iEvent.put( std::move(fw_moments_0), "FWmoment0");
-   iEvent.put( std::move(fw_moments_1), "FWmoment1");
-   iEvent.put( std::move(fw_moments_2), "FWmoment2");
-   iEvent.put( std::move(fw_moments_3), "FWmoment3");
-   iEvent.put( std::move(fw_moments_4), "FWmoment4");
-   iEvent.put( std::move(sumPztop), "sumPztop");
-   iEvent.put( std::move(sumPzW), "sumPzW");
-   iEvent.put( std::move(sumPzZ), "sumPzZ");
-   iEvent.put( std::move(sumPzH), "sumPzH");
-   iEvent.put( std::move(sumPzjet), "sumPzjet");
-   iEvent.put( std::move(sumPtop), "sumPtop");
-   iEvent.put( std::move(sumPW), "sumPW");
-   iEvent.put( std::move(sumPZ), "sumPZ");
-   iEvent.put( std::move(sumPH), "sumPH");
-   iEvent.put( std::move(sumPjet), "sumPjet");
-   iEvent.put( std::move(Njetstop), "Njetstop");
-   iEvent.put( std::move(NjetsW), "NjetsW");
-   iEvent.put( std::move(NjetsZ), "NjetsZ");
-   iEvent.put( std::move(NjetsH), "NjetsH");
-   iEvent.put( std::move(Njetsjet), "Njetsjet");
-   iEvent.put( std::move(fw_moments_1_top), "FWmoment1top");
-   iEvent.put( std::move(fw_moments_2_top), "FWmoment2top");
-   iEvent.put( std::move(fw_moments_3_top), "FWmoment3top");
-   iEvent.put( std::move(fw_moments_4_top), "FWmoment4top");
-   iEvent.put( std::move(isotropy_top), "isotropytop");
-   iEvent.put( std::move(sphericity_top), "sphericitytop");
-   iEvent.put( std::move(aplanarity_top), "aplanaritytop");
-   iEvent.put( std::move(thrust_top), "thrusttop");
-   iEvent.put( std::move(fw_moments_1_W), "FWmoment1W");
-   iEvent.put( std::move(fw_moments_2_W), "FWmoment2W");
-   iEvent.put( std::move(fw_moments_3_W), "FWmoment3W");
-   iEvent.put( std::move(fw_moments_4_W), "FWmoment4W");
-   iEvent.put( std::move(isotropy_W), "isotropyW");
-   iEvent.put( std::move(sphericity_W), "sphericityW");
-   iEvent.put( std::move(aplanarity_W), "aplanarityW");
-   iEvent.put( std::move(thrust_W), "thrustW");
-   iEvent.put( std::move(fw_moments_1_Z), "FWmoment1Z");
-   iEvent.put( std::move(fw_moments_2_Z), "FWmoment2Z");
-   iEvent.put( std::move(fw_moments_3_Z), "FWmoment3Z");
-   iEvent.put( std::move(fw_moments_4_Z), "FWmoment4Z");
-   iEvent.put( std::move(isotropy_Z), "isotropyZ");
-   iEvent.put( std::move(sphericity_Z), "sphericityZ");
-   iEvent.put( std::move(aplanarity_Z), "aplanarityZ");
-   iEvent.put( std::move(thrust_Z), "thrustZ");
-   iEvent.put( std::move(fw_moments_1_H), "FWmoment1H");
-   iEvent.put( std::move(fw_moments_2_H), "FWmoment2H");
-   iEvent.put( std::move(fw_moments_3_H), "FWmoment3H");
-   iEvent.put( std::move(fw_moments_4_H), "FWmoment4H");
-   iEvent.put( std::move(isotropy_H), "isotropyH");
-   iEvent.put( std::move(sphericity_H), "sphericityH");
-   iEvent.put( std::move(aplanarity_H), "aplanarityH");
-   iEvent.put( std::move(thrust_H), "thrustH");
-   iEvent.put( std::move(et), "et");
-   iEvent.put( std::move(genJetPt), "genJetPt");
-   iEvent.put( std::move(eta), "eta");
-   iEvent.put( std::move(mass), "mass");
-   iEvent.put( std::move(SDmass), "SDmass");
-   iEvent.put( std::move(tau32V), "tau32");
-   iEvent.put( std::move(tau21V), "tau21");
-   iEvent.put( std::move(bDiscV), "bDisc");
-   iEvent.put( std::move(bDisc1V), "bDisc1");
-   iEvent.put( std::move(bDisc2V), "bDisc2");
-   iEvent.put( std::move(vertV), "nPV");
-   iEvent.put( std::move(decayModeV), "decayMode");
-   iEvent.put( std::move(nAK4JetsV), "nAK4Jets");
-   iEvent.put( std::move(savedJetsV), "savedJets");
-   iEvent.put( std::move(qV), "q");
-   iEvent.put( std::move(m12_H), "m12H"); 
-   iEvent.put( std::move(m23_H), "m23H"); 
-   iEvent.put( std::move(m13_H), "m13H"); 
-   iEvent.put( std::move(m1234_H), "m1234H"); 
-   iEvent.put( std::move(m12_W), "m12W"); 
-   iEvent.put( std::move(m23_W), "m23W"); 
-   iEvent.put( std::move(m13_W), "m13W"); 
-   iEvent.put( std::move(m1234_W), "m1234W"); 
-   iEvent.put( std::move(m12_Z), "m12Z"); 
-   iEvent.put( std::move(m23_Z), "m23Z"); 
-   iEvent.put( std::move(m13_Z), "m13Z"); 
-   iEvent.put( std::move(m1234_Z), "m1234Z"); 
-   iEvent.put( std::move(m12_top), "m12top"); 
-   iEvent.put( std::move(m23_top), "m23top"); 
-   iEvent.put( std::move(m13_top), "m13top"); 
-   iEvent.put( std::move(m1234_top), "m1234top"); 
-   iEvent.put( std::move(genPt), "genPt");
-   iEvent.put( std::move(dRjetParticle), "dRjetParticle");
-   iEvent.put( std::move(topSize), "topSize");
-   iEvent.put( std::move(muRFweights), "muRFweights");
-   iEvent.put( std::move(PDFweights), "PDFweights");
-   iEvent.put( std::move(isBv), "isB");
-   iEvent.put( std::move(isTv), "isT");
-   iEvent.put( std::move(isWv), "isW");
-   iEvent.put( std::move(isZv), "isZ");
-   iEvent.put( std::move(isHv), "isH");
    }
+ //End jet loop
+
+
+
+if (passFilters) {
+
+  iEvent.put( std::move(fw_moments_0), "FWmoment0");
+  iEvent.put( std::move(fw_moments_1), "FWmoment1");
+  iEvent.put( std::move(fw_moments_2), "FWmoment2");
+  iEvent.put( std::move(fw_moments_3), "FWmoment3");
+  iEvent.put( std::move(fw_moments_4), "FWmoment4");
+  iEvent.put( std::move(sumPztop), "sumPztop");
+  iEvent.put( std::move(sumPzW), "sumPzW");
+  iEvent.put( std::move(sumPzZ), "sumPzZ");
+  iEvent.put( std::move(sumPzH), "sumPzH");
+  iEvent.put( std::move(sumPzjet), "sumPzjet");
+  iEvent.put( std::move(sumPtop), "sumPtop");
+  iEvent.put( std::move(sumPW), "sumPW");
+  iEvent.put( std::move(sumPZ), "sumPZ");
+  iEvent.put( std::move(sumPH), "sumPH");
+  iEvent.put( std::move(sumPjet), "sumPjet");
+  iEvent.put( std::move(Njetstop), "Njetstop");
+  iEvent.put( std::move(NjetsW), "NjetsW");
+  iEvent.put( std::move(NjetsZ), "NjetsZ");
+  iEvent.put( std::move(NjetsH), "NjetsH");
+  iEvent.put( std::move(Njetsjet), "Njetsjet");
+  iEvent.put( std::move(fw_moments_1_top), "FWmoment1top");
+  iEvent.put( std::move(fw_moments_2_top), "FWmoment2top");
+  iEvent.put( std::move(fw_moments_3_top), "FWmoment3top");
+  iEvent.put( std::move(fw_moments_4_top), "FWmoment4top");
+  iEvent.put( std::move(isotropy_top), "isotropytop");
+  iEvent.put( std::move(sphericity_top), "sphericitytop");
+  iEvent.put( std::move(aplanarity_top), "aplanaritytop");
+  iEvent.put( std::move(thrust_top), "thrusttop");
+  iEvent.put( std::move(fw_moments_1_W), "FWmoment1W");
+  iEvent.put( std::move(fw_moments_2_W), "FWmoment2W");
+  iEvent.put( std::move(fw_moments_3_W), "FWmoment3W");
+  iEvent.put( std::move(fw_moments_4_W), "FWmoment4W");
+  iEvent.put( std::move(isotropy_W), "isotropyW");
+  iEvent.put( std::move(sphericity_W), "sphericityW");
+  iEvent.put( std::move(aplanarity_W), "aplanarityW");
+  iEvent.put( std::move(thrust_W), "thrustW");
+  iEvent.put( std::move(fw_moments_1_Z), "FWmoment1Z");
+  iEvent.put( std::move(fw_moments_2_Z), "FWmoment2Z");
+  iEvent.put( std::move(fw_moments_3_Z), "FWmoment3Z");
+  iEvent.put( std::move(fw_moments_4_Z), "FWmoment4Z");
+  iEvent.put( std::move(isotropy_Z), "isotropyZ");
+  iEvent.put( std::move(sphericity_Z), "sphericityZ");
+  iEvent.put( std::move(aplanarity_Z), "aplanarityZ");
+  iEvent.put( std::move(thrust_Z), "thrustZ");
+  iEvent.put( std::move(fw_moments_1_H), "FWmoment1H");
+  iEvent.put( std::move(fw_moments_2_H), "FWmoment2H");
+  iEvent.put( std::move(fw_moments_3_H), "FWmoment3H");
+  iEvent.put( std::move(fw_moments_4_H), "FWmoment4H");
+  iEvent.put( std::move(isotropy_H), "isotropyH");
+  iEvent.put( std::move(sphericity_H), "sphericityH");
+  iEvent.put( std::move(aplanarity_H), "aplanarityH");
+  iEvent.put( std::move(thrust_H), "thrustH");
+  iEvent.put( std::move(et), "et");
+  iEvent.put( std::move(genJetPt), "genJetPt");
+  iEvent.put( std::move(eta), "eta");
+  iEvent.put( std::move(mass), "mass");
+  iEvent.put( std::move(SDmass), "SDmass");
+  iEvent.put( std::move(tau32V), "tau32");
+  iEvent.put( std::move(tau21V), "tau21");
+  iEvent.put( std::move(bDiscV), "bDisc");
+  iEvent.put( std::move(bDisc1V), "bDisc1");
+  iEvent.put( std::move(bDisc2V), "bDisc2");
+  iEvent.put( std::move(vertV), "nPV");
+  iEvent.put( std::move(decayModeV), "decayMode");
+  iEvent.put( std::move(nAK4JetsV), "nAK4Jets");
+  iEvent.put( std::move(savedJetsV), "savedJets");
+  iEvent.put( std::move(qV), "q");
+  iEvent.put( std::move(m12_H), "m12H"); 
+  iEvent.put( std::move(m23_H), "m23H"); 
+  iEvent.put( std::move(m13_H), "m13H"); 
+  iEvent.put( std::move(m1234_H), "m1234H"); 
+  iEvent.put( std::move(m12_W), "m12W"); 
+  iEvent.put( std::move(m23_W), "m23W"); 
+  iEvent.put( std::move(m13_W), "m13W"); 
+  iEvent.put( std::move(m1234_W), "m1234W"); 
+  iEvent.put( std::move(m12_Z), "m12Z"); 
+  iEvent.put( std::move(m23_Z), "m23Z"); 
+  iEvent.put( std::move(m13_Z), "m13Z"); 
+  iEvent.put( std::move(m1234_Z), "m1234Z"); 
+  iEvent.put( std::move(m12_top), "m12top"); 
+  iEvent.put( std::move(m23_top), "m23top"); 
+  iEvent.put( std::move(m13_top), "m13top"); 
+  iEvent.put( std::move(m1234_top), "m1234top"); 
+  iEvent.put( std::move(genPt), "genPt");
+  iEvent.put( std::move(dRjetParticle), "dRjetParticle");
+  iEvent.put( std::move(topSize), "topSize");
+  iEvent.put( std::move(muRFweights), "muRFweights");
+  iEvent.put( std::move(PDFweights), "PDFweights");
+  iEvent.put( std::move(isBv), "isB");
+  iEvent.put( std::move(isTv), "isT");
+  iEvent.put( std::move(isWv), "isW");
+  iEvent.put( std::move(isZv), "isZ");
+  iEvent.put( std::move(isHv), "isH");
+ }
 
 }
 // ------------ method called once each stream before processing any runs, lumis or events  ------------
@@ -1652,12 +1748,12 @@ BESTProducer::endStream() {
 float BESTProducer::LegP(float x, int order){
 
 
-if (order == 0) return 1;
-else if (order == 1) return x;
-else if (order == 2) return 0.5*(3*x*x - 1);
-else if (order == 3) return 0.5*(5*x*x*x - 3*x);
-else if (order == 4) return 0.125*(35*x*x*x*x - 30*x*x + 3);
-else return 0;
+  if (order == 0) return 1;
+  else if (order == 1) return x;
+  else if (order == 2) return 0.5*(3*x*x - 1);
+  else if (order == 3) return 0.5*(5*x*x*x - 3*x);
+  else if (order == 4) return 0.125*(35*x*x*x*x - 30*x*x + 3);
+  else return 0;
 
 }
 
@@ -1665,134 +1761,140 @@ int BESTProducer::FWMoments( std::vector<TLorentzVector> particles, double (&out
 
 
 
-	int numParticles = particles.size();
+  int numParticles = particles.size();
 
 
 
-	float s = 0.0;
-	for(int i = 0; i < numParticles; i++){
+  float s = 0.0;
+  for(int i = 0; i < numParticles; i++){
 
-		s += particles[i].E();
-	}
-
-
-
-	float H0 = 0.0;
-	float H4 = 0.0;
-	float H3 = 0.0;
-	float H2 = 0.0;
-	float H1 = 0.0;
-
-	for (int i = 0; i < numParticles; i++){
-
-		for (int j = i; j < numParticles; j++){
-
-			float costh = ( particles[i].Px() * particles[j].Px() + particles[i].Py() * particles[j].Py() + particles[i].Pz() * particles[j].Pz() ) / ( particles[i].P() * particles[j].P() );
-			float w1 = particles[i].P();
-			float w2 = particles[j].P();
-
-			float fw0 = LegP(costh, 0);
-			float fw1 = LegP(costh, 1);
-			float fw2 = LegP(costh, 2);
-			float fw3 = LegP(costh, 3);
-			float fw4 = LegP(costh, 4);
+    s += particles[i].E();
+  }
 
 
 
-			H0 += w1 * w2 * fw0;
-			H1 += w1 * w2 * fw1;
-			H2 += w1 * w2 * fw2;
-			H3 += w1 * w2 * fw3;
-			H4 += w1 * w2 * fw4;
+  float H0 = 0.0;
+  float H4 = 0.0;
+  float H3 = 0.0;
+  float H2 = 0.0;
+  float H1 = 0.0;
+
+  for (int i = 0; i < numParticles; i++){
+
+    for (int j = i; j < numParticles; j++){
+
+      float costh = ( particles[i].Px() * particles[j].Px() + particles[i].Py() * particles[j].Py() + particles[i].Pz() * particles[j].Pz() ) / ( particles[i].P() * particles[j].P() );
+      float w1 = particles[i].P();
+      float w2 = particles[j].P();
+
+      float fw0 = LegP(costh, 0);
+      float fw1 = LegP(costh, 1);
+      float fw2 = LegP(costh, 2);
+      float fw3 = LegP(costh, 3);
+      float fw4 = LegP(costh, 4);
 
 
-		}
-	}
 
-	H0 += 0.001;
-	outputs[0] = (H0);
-	outputs[1] = (H1 / H0);
-	outputs[2] = (H2 / H0);
-	outputs[3] = (H3 / H0);
-	outputs[4] = (H4 / H0);
+      H0 += w1 * w2 * fw0;
+      H1 += w1 * w2 * fw1;
+      H2 += w1 * w2 * fw2;
+      H3 += w1 * w2 * fw3;
+      H4 += w1 * w2 * fw4;
+
+
+    }
+  }
+
+  H0 += 0.001;
+  outputs[0] = (H0);
+  outputs[1] = (H1 / H0);
+  outputs[2] = (H2 / H0);
+  outputs[3] = (H3 / H0);
+  outputs[4] = (H4 / H0);
 	
+  if (isnan(outputs[0])) std::cout << "H0 is NaN!" << std::endl;
+  if (isnan(outputs[1])) std::cout << "H1 is NaN!" << std::endl;
 
-	return 0;
+  //  if (outputs[0] > -10 ) std::cout << "H0 is NaN!" << std::endl;
+  //  if (outputs[0] > -10 ) std::cout << "H0 is NaN!" << std::endl;
+
+
+  return 0;
 }
 
 
 void BESTProducer::pboost( TVector3 pbeam, TVector3 plab, TLorentzVector &pboo, bool debug = false ){
 
- //given jet constituent momentum plab, find momentum relative to
- // beam direction pbeam
+  //given jet constituent momentum plab, find momentum relative to
+  // beam direction pbeam
 
- //plab = Particle 3-vector in Boost Frame
- //pbeam = Lab Jet 3-vector
+  //plab = Particle 3-vector in Boost Frame
+  //pbeam = Lab Jet 3-vector
 
   double pl = plab.Dot(pbeam);
   pl *= double(1. / pbeam.Mag());
 
 
- if (debug) std::cout << "pl (Z-component): " << pl << std::endl;
- // double pt = sqrt(plab.Mag()*plab.Mag()-pl*pl);
+  if (debug) std::cout << "pl (Z-component): " << pl << std::endl;
+  // double pt = sqrt(plab.Mag()*plab.Mag()-pl*pl);
 
- // set x axis direction along pbeam x (0,0,1)
+  // set x axis direction along pbeam x (0,0,1)
 
- TVector3 pbx;
+  TVector3 pbx;
 
- pbx.SetX(pbeam.Y());
- pbx.SetY(-pbeam.X());
- pbx.SetZ(0.0);
+  pbx.SetX(pbeam.Y());
+  pbx.SetY(-pbeam.X());
+  pbx.SetZ(0.0);
 
- pbx *= double(1. / pbx.Mag());
- if (debug){
-   std::cout <<"pbx px: " << pbx.X() << std::endl;
-   std::cout <<"pbx py: " << pbx.Y() << std::endl;
-   std::cout <<"pbx pz: " << pbx.Z() << std::endl;
-   std::cout <<"pbx mag: "<< pbx.Mag() << std::endl;
- }
+  pbx *= double(1. / pbx.Mag());
+  if (debug){
+    std::cout <<"pbx px: " << pbx.X() << std::endl;
+    std::cout <<"pbx py: " << pbx.Y() << std::endl;
+    std::cout <<"pbx pz: " << pbx.Z() << std::endl;
+    std::cout <<"pbx mag: "<< pbx.Mag() << std::endl;
+  }
 
- // if (fabs(pbx.X()) < 0.01) pbx.SetX(0);
- // if (fabs(pbx.Y()) < 0.01) pbx.SetY(0);
- // if (fabs(pbx.Z()) < 0.01) pbx.SetZ(0);
+  // if (fabs(pbx.X()) < 0.01) pbx.SetX(0);
+  // if (fabs(pbx.Y()) < 0.01) pbx.SetY(0);
+  // if (fabs(pbx.Z()) < 0.01) pbx.SetZ(0);
 
 
- // set y axis direction along -pbx x pbeam
+  // set y axis direction along -pbx x pbeam
 
- TVector3 pby;
+  TVector3 pby;
 
- pby = -pbx.Cross(pbeam);
- pby *= double(1. / pby.Mag());
- if (debug){
-   std::cout <<"pby px: " << pby.X() << std::endl;
-   std::cout <<"pby py: " << pby.Y() << std::endl;
-   std::cout <<"pby pz: " << pby.Z() << std::endl;
-   std::cout <<"pby mag: "<< pby.Mag() << std::endl;
+  pby = -pbx.Cross(pbeam);
+  pby *= double(1. / pby.Mag());
+  if (debug){
+    std::cout <<"pby px: " << pby.X() << std::endl;
+    std::cout <<"pby py: " << pby.Y() << std::endl;
+    std::cout <<"pby pz: " << pby.Z() << std::endl;
+    std::cout <<"pby mag: "<< pby.Mag() << std::endl;
 
-   std::cout << "pbx Dot pby: " << pbx.Dot(pby) << std::endl;
-   std::cout << "pbx Dot pbeam: " << pbx.Dot(pbeam) << std::endl;
-   std::cout << "pby Dot pbeam: " << pby.Dot(pbeam) << std::endl;
+    std::cout << "pbx Dot pby: " << pbx.Dot(pby) << std::endl;
+    std::cout << "pbx Dot pbeam: " << pbx.Dot(pbeam) << std::endl;
+    std::cout << "pby Dot pbeam: " << pby.Dot(pbeam) << std::endl;
 
- }
- //Check for too small values in pbx, pby
+  }
+  //Check for too small values in pbx, pby
 
- // if (fabs(pby.X()) < 0.01) pby.SetX(0);
- // if (fabs(pby.Y()) < 0.01) pby.SetY(0);
- // if (fabs(pby.Z()) < 0.01) pby.SetZ(0);
+  // if (fabs(pby.X()) < 0.01) pby.SetX(0);
+  // if (fabs(pby.Y()) < 0.01) pby.SetY(0);
+  // if (fabs(pby.Z()) < 0.01) pby.SetZ(0);
 
- if (debug){
-   std::cout << "plab mag2: " << plab.Mag()*plab.Mag() << std::endl;
-   std::cout << "Before pboo, px^2 + py^2 + pz^2: " << (pboo.Px()*pboo.Px() + pboo.Py()*pboo.Py() + pboo.Pz()*pboo.Pz()) << std::endl;
-   std::cout << "Before pboo, E^2: " << pboo.E()*pboo.E() << std::endl;
- }
- pboo.SetX((plab.Dot(pbx)));
- pboo.SetY((plab.Dot(pby)));
- pboo.SetZ(pl);
+  if (debug){
+    std::cout << "plab mag2: " << plab.Mag()*plab.Mag() << std::endl;
+    std::cout << "Before pboo, px^2 + py^2 + pz^2: " << (pboo.Px()*pboo.Px() + pboo.Py()*pboo.Py() + pboo.Pz()*pboo.Pz()) << std::endl;
+    std::cout << "Before pboo, E^2: " << pboo.E()*pboo.E() << std::endl;
+  }
+  pboo.SetX((plab.Dot(pbx)));
+  pboo.SetY((plab.Dot(pby)));
+  pboo.SetZ(pl);
 
- if (debug){
-   std::cout << "After pboo, px^2 + py^2 + pz^2: " << (pboo.Px()*pboo.Px() + pboo.Py()*pboo.Py() + pboo.Pz()*pboo.Pz()) << std::endl;
-   std::cout << "After pboo, E^2: " << pboo.E()*pboo.E() << std::endl;
- }
+  if (debug){
+    std::cout << "After pboo, px^2 + py^2 + pz^2: " << (pboo.Px()*pboo.Px() + pboo.Py()*pboo.Py() + pboo.Pz()*pboo.Pz()) << std::endl;
+    std::cout << "After pboo, E^2: " << pboo.E()*pboo.E() << std::endl;
+  }
 
 }
 
@@ -1817,18 +1919,18 @@ void
 BESTProducer::endRun(edm::Run const& iRun, edm::EventSetup const&)
 {
   /*
-  edm::Handle<LHERunInfoProduct> run; 
-  typedef std::vector<LHERunInfoProduct::Header>::const_iterator headers_const_iterator;
-  iRun.getByToken( lheToken_, run );
-  LHERunInfoProduct myLHERunInfoProduct = *(run.product());
+    edm::Handle<LHERunInfoProduct> run; 
+    typedef std::vector<LHERunInfoProduct::Header>::const_iterator headers_const_iterator;
+    iRun.getByToken( lheToken_, run );
+    LHERunInfoProduct myLHERunInfoProduct = *(run.product());
   
-  for (headers_const_iterator iter=myLHERunInfoProduct.headers_begin(); iter!=myLHERunInfoProduct.headers_end(); iter++){
-      std::cout << iter->tag() << std::endl;
-      //std::vector<std::string> lines = iter->lines();
-      //for (unsigned int iLine = 0; iLine<lines.size(); iLine++) {
-      //std::cout << lines.at(iLine);
+    for (headers_const_iterator iter=myLHERunInfoProduct.headers_begin(); iter!=myLHERunInfoProduct.headers_end(); iter++){
+    std::cout << iter->tag() << std::endl;
+    //std::vector<std::string> lines = iter->lines();
+    //for (unsigned int iLine = 0; iLine<lines.size(); iLine++) {
+    //std::cout << lines.at(iLine);
     //}
-  }
+    }
   
   */
 }
@@ -1836,18 +1938,18 @@ BESTProducer::endRun(edm::Run const& iRun, edm::EventSetup const&)
  
 // ------------ method called when starting to processes a luminosity block  ------------
 /*
-void
-BESTProducer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-{
-}
+  void
+  BESTProducer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+  {
+  }
 */
  
 // ------------ method called when ending the processing of a luminosity block  ------------
 /*
-void
-BESTProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-{
-}
+  void
+  BESTProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+  {
+  }
 */
  
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
